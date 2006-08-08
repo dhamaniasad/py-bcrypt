@@ -23,7 +23,6 @@ VERSION = "0.1"
 
 if __name__ == '__main__':
 	bcrypt = Extension('bcrypt._bcrypt',
-		define_macros = [('PROGVER', '"' + VERSION + '"')],
 		sources = ['bcrypt/bcrypt_python.c', 'bcrypt/blowfish.c',
 		    'bcrypt/bcrypt.c'])
 	setup(	name = "bcrypt",

@@ -49,7 +49,12 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <string.h>
+
 #include "pybc_blf.h"
+
+#if defined(_MSC_VER)
+#define snprintf _snprintf
+#endif
 
 /* This implementation is adaptable to current computing power.
  * You can have up to 2^31 rounds which should be enough for some

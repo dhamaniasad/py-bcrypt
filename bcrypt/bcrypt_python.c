@@ -16,6 +16,12 @@
 
 #include "Python.h"
 
+#if defined(_MSC_VER)
+typedef unsigned __int8		u_int8_t;
+typedef unsigned __int16	u_int16_t;
+typedef unsigned __int32	u_int32_t;
+#endif
+
 /* $Id$ */
 
 /* Import */
@@ -91,6 +97,6 @@ init_bcrypt(void)
 	PyObject *m;
 
 	m = Py_InitModule3("bcrypt._bcrypt", bcrypt_methods, module_doc);
-	PyModule_AddStringConstant(m, "__version__", PROGVER);
+	PyModule_AddStringConstant(m, "__version__", "0.1");
 }
 

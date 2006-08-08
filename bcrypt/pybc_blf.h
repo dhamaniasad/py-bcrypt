@@ -34,6 +34,12 @@
 #ifndef _PYBC_BLF_H_
 #define _PYBC_BLF_H_
 
+#if defined(_MSC_VER)
+typedef unsigned __int8		u_int8_t;
+typedef unsigned __int16	u_int16_t;
+typedef unsigned __int32	u_int32_t;
+#endif
+
 /* Schneier specifies a maximum key length of 56 bytes.
  * This ensures that every key bit affects every cipher
  * bit.  However, the subkeys can hold up to 72 bytes.
