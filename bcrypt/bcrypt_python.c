@@ -72,7 +72,17 @@ bcrypt_hashpw(PyObject *self, PyObject *args, PyObject *kw_args)
 	if (!PyArg_ParseTupleAndKeywords(args, kw_args, "ss:hashpw", keywords,
 	    &password, &salt))
                 return NULL;
-	if ((ret = pybc_bcrypt(password, salt)) == NULL ||
+
+	char *password_copy = strdup(password);
+	char *salt_copy = strdup(salt);
+
+	Py_BEGIN_ALLOW_THREADS;
+	ret = pybc_bcrypt(password_copy, salt_copy);
+	Py_END_ALLOW_THREADS;
+
+	free(password_copy);
+	free(salt_copy);
+	if ((ret == NULL) ||
 	    strcmp(ret, ":") == 0) {
 		PyErr_SetString(PyExc_ValueError, "Invalid salt");
 		return NULL;
