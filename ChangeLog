@@ -1,6 +1,7 @@
 20100614
  - (djm) Prefer setuptools for packaging. Based on patch from Niall
    O'Higgins.
+ - (djm) Release py-bcrypt-0.2
 
 20091001
  - (djm) Allow Python threads to run during (potentially lengthy) bcrypt
