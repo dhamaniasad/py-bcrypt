@@ -17,15 +17,18 @@
 # $Id$
 
 import sys
-from distutils.core import setup, Extension
-
-VERSION = "0.1"
-
+try:
+	from setuptools import setup, Extension
+except ImportError:
+	from distutils.core import setup, Extension
+ 
+VERSION = "0.2"
+ 
 if __name__ == '__main__':
 	bcrypt = Extension('bcrypt._bcrypt',
 		sources = ['bcrypt/bcrypt_python.c', 'bcrypt/blowfish.c',
 		    'bcrypt/bcrypt.c'])
-	setup(	name = "bcrypt",
+	setup(	name = "py-bcrypt",
 		version = VERSION,
 		author = "Damien Miller",
 		author_email = "djm@mindrot.org",

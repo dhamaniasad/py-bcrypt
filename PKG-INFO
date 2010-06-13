@@ -1,6 +1,6 @@
 Metadata-Version: 1.0
 Name: py-bcrypt
-Version: 0.1
+Version: 0.2
 Summary: Blowfish password hashing library
 Home-page: http://www.mindrot.org/py-bcrypt.html
 Author: Damien Miller
