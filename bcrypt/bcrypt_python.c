@@ -82,8 +82,11 @@ bcrypt_hashpw(PyObject *self, PyObject *args, PyObject *kw_args)
 	ret = pybc_bcrypt(password_copy, salt_copy);
 	Py_END_ALLOW_THREADS;
 
+	bzero(password_copy, strlen(password_copy));
 	free(password_copy);
+	bzero(salt_copy, strlen(salt_copy));
 	free(salt_copy);
+
 	if ((ret == NULL) ||
 	    strcmp(ret, ":") == 0) {
 		PyErr_SetString(PyExc_ValueError, "Invalid salt");
