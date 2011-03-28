@@ -68,13 +68,15 @@ bcrypt_hashpw(PyObject *self, PyObject *args, PyObject *kw_args)
 	static char *keywords[] = { "password", "salt", NULL };
 	char *password = NULL, *salt = NULL;
 	char *ret;
+	char *password_copy;
+	char *salt_copy;
 
 	if (!PyArg_ParseTupleAndKeywords(args, kw_args, "ss:hashpw", keywords,
 	    &password, &salt))
                 return NULL;
 
-	char *password_copy = strdup(password);
-	char *salt_copy = strdup(salt);
+	password_copy = strdup(password);
+	salt_copy = strdup(salt);
 
 	Py_BEGIN_ALLOW_THREADS;
 	ret = pybc_bcrypt(password_copy, salt_copy);
