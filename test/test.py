@@ -62,7 +62,7 @@ test_vectors = [
 	  '$2a$12$WApznUOJfkEGSmYRfnkrPOr466oFDCaj4b6HY3EXGvfxm43seyhgC' ],
 ]
 
-class TestRadix(unittest.TestCase):
+class TestBcrypt(unittest.TestCase):
 	def test_00__test_vectors(self):
 		for plain, salt, expected in test_vectors:
 			self.assertEqual(bcrypt.hashpw(plain, salt), expected)
