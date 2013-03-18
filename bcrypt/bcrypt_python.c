@@ -111,6 +111,6 @@ init_bcrypt(void)
 	PyObject *m;
 
 	m = Py_InitModule3("bcrypt._bcrypt", bcrypt_methods, module_doc);
-	PyModule_AddStringConstant(m, "__version__", "0.1");
+	PyModule_AddStringConstant(m, "__version__", "0.3");
 }
 
