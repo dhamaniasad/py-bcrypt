@@ -66,14 +66,11 @@
 #define BCRYPT_BLOCKS 6		/* Ciphertext blocks */
 #define BCRYPT_MINROUNDS 16	/* we have log2(rounds) in salt */
 
-char *pybc_bcrypt(const char *, const char *);
+int pybc_bcrypt(const char *, const char *, char *, size_t);
 void encode_salt(char *, u_int8_t *, u_int16_t, u_int8_t);
 
 static void encode_base64(u_int8_t *, u_int8_t *, u_int16_t);
 static void decode_base64(u_int8_t *, u_int16_t, u_int8_t *);
-
-static char    encrypted[128];
-static char    error[] = ":";
 
 const static u_int8_t Base64Code[] =
 "./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -146,8 +143,8 @@ encode_salt(char *salt, u_int8_t *csalt, u_int16_t clen, u_int8_t logr)
 /* We handle $Vers$log2(NumRounds)$salt+passwd$
    i.e. $2$04$iwouldntknowwhattosayetKdJ6iFtacBqJdKe6aW7ou */
 
-char   *
-pybc_bcrypt(const char *key, const char *salt)
+int
+pybc_bcrypt(const char *key, const char *salt, char *result, size_t result_len)
 {
 	pybc_blf_ctx state;
 	u_int32_t rounds, i, k;
@@ -157,14 +154,18 @@ pybc_bcrypt(const char *key, const char *salt)
 	u_int8_t csalt[BCRYPT_MAXSALT];
 	u_int32_t cdata[BCRYPT_BLOCKS];
 	int n;
+	char encrypted[128];
+	size_t elen;
+
+	/* Return the error marker unless otherwise specified */
+	bzero(result, result_len);
+	*result = ':';
 
 	/* Discard "$" identifier */
 	salt++;
 
-	if (*salt > BCRYPT_VERSION) {
-		/* How do I handle errors ? Return ':' */
-		return error;
-	}
+	if (*salt > BCRYPT_VERSION)
+		return -1;
 
 	/* Check for minor versions */
 	if (salt[1] != '$') {
@@ -175,7 +176,7 @@ pybc_bcrypt(const char *key, const char *salt)
 			 salt++;
 			 break;
 		 default:
-			 return error;
+			 return -1;
 		 }
 	} else
 		 minor = 0;
@@ -185,21 +186,21 @@ pybc_bcrypt(const char *key, const char *salt)
 
 	if (salt[2] != '$')
 		/* Out of sync with passwd entry */
-		return error;
+		return -1;
 
 	/* Computer power doesn't increase linear, 2^x should be fine */
 	n = atoi(salt);
 	if (n > 31 || n < 0)
-		return error;
+		return -1;
 	logr = (u_int8_t)n;
 	if ((rounds = (u_int32_t) 1 << logr) < BCRYPT_MINROUNDS)
-		return error;
+		return -1;
 
 	/* Discard num rounds + "$" identifier */
 	salt += 3;
 
 	if (strlen(salt) * 3 / 4 < BCRYPT_MAXSALT)
-		return error;
+		return -1;
 
 	/* We dont want the base64 salt but the raw data */
 	decode_base64(csalt, BCRYPT_MAXSALT, (u_int8_t *) salt);
@@ -249,7 +250,14 @@ pybc_bcrypt(const char *key, const char *salt)
 	encode_base64((u_int8_t *) encrypted + i + 3, csalt, BCRYPT_MAXSALT);
 	encode_base64((u_int8_t *) encrypted + strlen(encrypted), ciphertext,
 	    4 * BCRYPT_BLOCKS - 1);
-	return encrypted;
+	elen = strlen(encrypted);
+	if (result_len <= elen) {
+		bzero(encrypted, sizeof(encrypted));
+		return -1;
+	}
+	memcpy(result, encrypted, elen + 1);
+	bzero(encrypted, sizeof(encrypted));
+	return 0;
 }
 
 static void
