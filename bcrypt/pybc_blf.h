@@ -34,7 +34,7 @@
 #ifndef _PYBC_BLF_H_
 #define _PYBC_BLF_H_
 
-#if defined(_MSC_VER)
+#if defined(_WIN32)
 typedef unsigned __int8		u_int8_t;
 typedef unsigned __int16	u_int16_t;
 typedef unsigned __int32	u_int32_t;

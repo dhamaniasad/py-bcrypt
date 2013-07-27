@@ -52,8 +52,9 @@
 
 #include "pybc_blf.h"
 
-#if defined(_MSC_VER)
+#if defined(_WIN32)
 #define snprintf _snprintf
+#define bzero(s,n) memset(s, '\0', n)
 #endif
 
 /* This implementation is adaptable to current computing power.

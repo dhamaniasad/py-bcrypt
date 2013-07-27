@@ -16,10 +16,11 @@
 
 #include "Python.h"
 
-#if defined(_MSC_VER)
+#if defined(_WIN32)
 typedef unsigned __int8		u_int8_t;
 typedef unsigned __int16	u_int16_t;
 typedef unsigned __int32	u_int32_t;
+#define bzero(s,n) memset(s, '\0', n)
 #endif
 
 /* $Id$ */
@@ -67,10 +68,8 @@ bcrypt_hashpw(PyObject *self, PyObject *args, PyObject *kw_args)
 {
 	static char *keywords[] = { "password", "salt", NULL };
 	char *password = NULL, *salt = NULL;
-	char hashed[128];
+	char hashed[128], char *password_copy, *salt_copy;
 	int ret;
-	char *password_copy;
-	char *salt_copy;
 
 	if (!PyArg_ParseTupleAndKeywords(args, kw_args, "ss:hashpw", keywords,
 	    &password, &salt))
