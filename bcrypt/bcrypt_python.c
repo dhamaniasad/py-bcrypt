@@ -38,7 +38,7 @@ static PyObject *
 bcrypt_encode_salt(PyObject *self, PyObject *args, PyObject *kw_args)
 {
 	static char *keywords[] = { "csalt", "log_rounds", NULL };
-	char *csalt = NULL;
+	u_int8_t *csalt = NULL;
 	int csaltlen = -1;
 	long log_rounds = -1;
 	char ret[64];
@@ -68,7 +68,7 @@ bcrypt_hashpw(PyObject *self, PyObject *args, PyObject *kw_args)
 {
 	static char *keywords[] = { "password", "salt", NULL };
 	char *password = NULL, *salt = NULL;
-	char hashed[128], char *password_copy, *salt_copy;
+	char hashed[128], *password_copy, *salt_copy;
 	int ret;
 
 	if (!PyArg_ParseTupleAndKeywords(args, kw_args, "ss:hashpw", keywords,
