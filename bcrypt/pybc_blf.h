@@ -34,10 +34,15 @@
 #ifndef _PYBC_BLF_H_
 #define _PYBC_BLF_H_
 
-#if defined(_WIN32)
-typedef unsigned __int8		u_int8_t;
-typedef unsigned __int16	u_int16_t;
-typedef unsigned __int32	u_int32_t;
+#if __STDC_VERSION__ >= 199901L /* C99 or later */
+#include <stdint.h>
+typedef uint8_t u_int8_t;
+typedef uint16_t u_int16_t;
+typedef uint32_t u_int32_t;
+#elif defined(_WIN32)
+typedef unsigned __int8 u_int8_t;
+typedef unsigned __int16 u_int16_t;
+typedef unsigned __int32 u_int32_t;
 #endif
 
 /* Schneier specifies a maximum key length of 56 bytes.

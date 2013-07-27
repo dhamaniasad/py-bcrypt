@@ -24,9 +24,6 @@ typedef int Py_ssize_t;
 #define PYBCRYPT_VERSION "0.4"
 
 #if defined(_WIN32)
-typedef unsigned __int8		u_int8_t;
-typedef unsigned __int16	u_int16_t;
-typedef unsigned __int32	u_int32_t;
 #define bzero(s,n) memset(s, '\0', n)
 #endif
 
