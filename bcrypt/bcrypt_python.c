@@ -14,14 +14,20 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#define PY_SSIZE_T_CLEAN
 #include "Python.h"
+
+#if PY_VERSION_HEX < 0x02050000
+typedef int Py_ssize_t;
+#endif
+
+#define PYBCRYPT_VERSION "0.4"
 
 #if defined(_WIN32)
 typedef unsigned __int8		u_int8_t;
 typedef unsigned __int16	u_int16_t;
 typedef unsigned __int32	u_int32_t;
 #define bzero(s,n) memset(s, '\0', n)
-#define strdup _strdup
 #endif
 
 /* $Id$ */
@@ -40,7 +46,7 @@ bcrypt_encode_salt(PyObject *self, PyObject *args, PyObject *kw_args)
 {
 	static char *keywords[] = { "csalt", "log_rounds", NULL };
 	u_int8_t *csalt = NULL;
-	int csaltlen = -1;
+	Py_ssize_t csaltlen = -1;
 	long log_rounds = -1;
 	char ret[64];
 
@@ -56,7 +62,31 @@ bcrypt_encode_salt(PyObject *self, PyObject *args, PyObject *kw_args)
 		return NULL;
 	}
 	encode_salt(ret, csalt, csaltlen, log_rounds);
+#if PY_MAJOR_VERSION >= 3
+	return PyUnicode_FromString(ret);
+#else
 	return PyString_FromString(ret);
+#endif
+}
+
+/* Check that a string has no embedded '\0' characters and duplicate it. */
+static char *
+checkdup(const char *s, Py_ssize_t len)
+{
+	Py_ssize_t i;
+	char *ret;
+
+	if (len < 0)
+		return NULL;
+	for (i = 0; i < len; i++) {
+		if (s[i] == '\0')
+			return NULL;
+	}
+	if ((ret = malloc(len + 1)) == NULL)
+		return NULL;
+	memcpy(ret, s, len);
+	ret[len] = '\0';
+	return ret;
 }
 
 PyDoc_STRVAR(bcrypt_hashpw_doc,
@@ -70,15 +100,32 @@ bcrypt_hashpw(PyObject *self, PyObject *args, PyObject *kw_args)
 	static char *keywords[] = { "password", "salt", NULL };
 	char *password = NULL, *salt = NULL;
 	char hashed[128], *password_copy, *salt_copy;
+	Py_ssize_t password_len = -1, salt_len = -1;
 	int ret;
 
-	if (!PyArg_ParseTupleAndKeywords(args, kw_args, "ss:hashpw", keywords,
-	    &password, &salt))
+	if (!PyArg_ParseTupleAndKeywords(args, kw_args, "s#s#:hashpw", keywords,
+	    &password, &password_len, &salt, &salt_len))
                 return NULL;
 
-	password_copy = strdup(password);
-	salt_copy = strdup(salt);
-
+	if (password_len < 0 || password_len > 65535) {
+		PyErr_SetString(PyExc_ValueError,
+		    "unsupported password length");
+		return NULL;
+	}
+	if (salt_len < 0 || salt_len > 65535) {
+		PyErr_SetString(PyExc_ValueError, "unsupported salt length");
+		return NULL;
+	}
+	if ((password_copy = checkdup(password, password_len)) == NULL) {
+		PyErr_SetString(PyExc_ValueError,
+		    "password must not contain nul characters");
+		return NULL;
+	}
+	if ((salt_copy = checkdup(salt, salt_len)) == NULL) {
+		PyErr_SetString(PyExc_ValueError,
+		    "salt must not contain nul characters");
+		return NULL;
+	}
 	Py_BEGIN_ALLOW_THREADS;
 	ret = pybc_bcrypt(password_copy, salt_copy, hashed, sizeof(hashed));
 	Py_END_ALLOW_THREADS;
@@ -91,8 +138,11 @@ bcrypt_hashpw(PyObject *self, PyObject *args, PyObject *kw_args)
 		PyErr_SetString(PyExc_ValueError, "Invalid salt");
 		return NULL;
 	}
-
+#if PY_MAJOR_VERSION >= 3
+	return PyUnicode_FromString(hashed);
+#else
 	return PyString_FromString(hashed);
+#endif
 }
 
 static PyMethodDef bcrypt_methods[] = {
@@ -105,12 +155,35 @@ static PyMethodDef bcrypt_methods[] = {
 
 PyDoc_STRVAR(module_doc, "Internal module used by bcrypt.\n");
 
+#if PY_MAJOR_VERSION >= 3
+static struct PyModuleDef bcrypt_module = {
+	PyModuleDef_HEAD_INIT,
+	"bcrypt._bcrypt",	/* m_name */
+	module_doc,		/* m_doc */
+	-1,			/* m_size */
+	bcrypt_methods,		/* m_methods */
+	NULL,			/* m_reload */
+	NULL,			/* m_traverse */
+	NULL,			/* m_clear */
+	NULL,			/* m_free */
+};
+
+PyMODINIT_FUNC
+PyInit__bcrypt(void)
+{
+	PyObject *m;
+
+	m = PyModule_Create(&bcrypt_module);
+	PyModule_AddStringConstant(m, "__version__", PYBCRYPT_VERSION);
+	return m;
+}
+#else
 PyMODINIT_FUNC
 init_bcrypt(void)
 {
 	PyObject *m;
 
 	m = Py_InitModule3("bcrypt._bcrypt", bcrypt_methods, module_doc);
-	PyModule_AddStringConstant(m, "__version__", "0.3");
+	PyModule_AddStringConstant(m, "__version__", PYBCRYPT_VERSION);
 }
-
+#endif
