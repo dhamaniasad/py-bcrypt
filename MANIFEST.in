@@ -1,0 +1,4 @@
+include bcrypt/*.h
+include test/*
+include LICENSE
+include TODO

@@ -1,0 +1,19 @@
+Metadata-Version: 1.0
+Name: py-bcrypt
+Version: 0.3
+Summary: Blowfish password hashing library
+Home-page: https://code.google.com/p/py-bcrypt/
+Author: Damien Miller
+Author-email: djm@mindrot.org
+License: BSD
+Download-URL: https://code.google.com/p/py-bcrypt/downloads/list
+Description: py-bcrypt is an implementation of the OpenBSD blowfish
+             password hashing algorithm, as described in the paper
+             "A Future-Adaptable Password Scheme", Niels Provos and
+             David Mazieres
+Keywords: password,hash,crypt,python,blowfish,crypto
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Natural Language :: English
+Classifier: Programming Language :: Python
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
