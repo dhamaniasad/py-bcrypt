@@ -19,16 +19,10 @@
 
 #if PY_VERSION_HEX < 0x02050000
 typedef int Py_ssize_t;
+#define bzero(s,l) memset(s, '\0', l)
 #endif
 
 #define PYBCRYPT_VERSION "0.4"
-
-#if defined(_WIN32)
-typedef unsigned __int8		u_int8_t;
-typedef unsigned __int16	u_int16_t;
-typedef unsigned __int32	u_int32_t;
-#define bzero(s,n) memset(s, '\0', n)
-#endif
 
 /* $Id$ */
 
@@ -124,6 +118,7 @@ bcrypt_hashpw(PyObject *self, PyObject *args, PyObject *kw_args)
 	if ((salt_copy = checkdup(salt, salt_len)) == NULL) {
 		PyErr_SetString(PyExc_ValueError,
 		    "salt must not contain nul characters");
+		free(password_copy);
 		return NULL;
 	}
 	Py_BEGIN_ALLOW_THREADS;
@@ -145,11 +140,82 @@ bcrypt_hashpw(PyObject *self, PyObject *args, PyObject *kw_args)
 #endif
 }
 
+PyDoc_STRVAR(bcrypt_kdf_doc,
+"kdf(password, salt, desired_key_bytes, rounds) -> key\n\
+    Derive \"desired_key_bytes\" (up to 512) cryptographic key material from\n\
+    a password and salt. NB. rounds is linear (not an exponent like\n\
+    gensalt). Recommended minimum salt length is 16 bytes\n");
+
+#if 0
+static void
+xdump(const u_int8_t *s, size_t l)
+{
+	size_t i;
+
+	for (i = 0; i < l; i++)
+		printf("\\x%02x", s[i]);
+}
+#endif
+
+static PyObject *
+bcrypt_kdf(PyObject *self, PyObject *args, PyObject *kw_args)
+{
+	static char *keywords[] = {
+		"password",
+		"salt",
+		"desired_key_bytes",
+		"rounds",
+		NULL
+	};
+	const u_int8_t *password = NULL, *salt = NULL;
+	Py_ssize_t password_len = -1, salt_len = -1;
+	long desired_key_bytes = -1, rounds = -1;
+	u_int8_t *key;
+	int ret;
+	PyObject *o = NULL;
+
+	if (!PyArg_ParseTupleAndKeywords(args, kw_args, "s#s#ll:kdf", keywords,
+	    &password, &password_len, &salt, &salt_len,
+	    &desired_key_bytes, &rounds))
+                return NULL;
+	if (password_len <= 0) {
+		PyErr_SetString(PyExc_ValueError, "Invalid password length");
+		return NULL;
+	}
+	if (salt_len <= 0) {
+		PyErr_SetString(PyExc_ValueError, "Invalid salt length");
+		return NULL;
+	}
+	if (desired_key_bytes <= 0 || desired_key_bytes > 512) {
+		PyErr_SetString(PyExc_ValueError, "Invalid output length");
+		return NULL;
+	}
+	if (rounds < 1) {
+		PyErr_SetString(PyExc_ValueError, "Invalid number of rounds");
+		return NULL;
+	}
+	if ((key = malloc(desired_key_bytes)) == NULL)
+		return NULL;
+	Py_BEGIN_ALLOW_THREADS;
+	ret = bcrypt_pbkdf(password, password_len, salt, salt_len,
+	    key, desired_key_bytes, rounds);
+	Py_END_ALLOW_THREADS;
+	if (ret != 0)
+		PyErr_SetString(PyExc_ValueError, "kdf failed");
+	else
+		o = PyBytes_FromStringAndSize(key, desired_key_bytes);
+	bzero(key, desired_key_bytes);
+	free(key);
+	return o;
+}
+
 static PyMethodDef bcrypt_methods[] = {
 	{	"hashpw",	(PyCFunction)bcrypt_hashpw,
 		METH_VARARGS|METH_KEYWORDS,	bcrypt_hashpw_doc	},
 	{	"encode_salt",	(PyCFunction)bcrypt_encode_salt,
 		METH_VARARGS|METH_KEYWORDS,	bcrypt_encode_salt_doc	},
+	{	"kdf",		(PyCFunction)bcrypt_kdf,
+		METH_VARARGS|METH_KEYWORDS,	bcrypt_kdf_doc	},
 	{NULL,		NULL}		/* sentinel */
 };
 
