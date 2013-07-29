@@ -83,7 +83,7 @@ void pybc_blf_enc(pybc_blf_ctx *, u_int32_t *, u_int16_t);
 u_int32_t pybc_Blowfish_stream2word(const u_int8_t *, u_int16_t, u_int16_t *);
 
 /* KDF interface */
-int bcrypt_pbkdf(const char *pass, size_t passlen,
+int bcrypt_pbkdf(const u_int8_t *pass, size_t passlen,
     const u_int8_t *salt, size_t saltlen,
     u_int8_t *key, size_t keylen, unsigned int rounds);
 

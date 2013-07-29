@@ -280,7 +280,7 @@ bcrypt_kdf(PyObject *self, PyObject *args, PyObject *kw_args)
 	if (ret != 0)
 		PyErr_SetString(PyExc_ValueError, "kdf failed");
 	else
-		o = PyBytes_FromStringAndSize(key, desired_key_bytes);
+		o = PyBytes_FromStringAndSize((char *)key, desired_key_bytes);
 	bzero(key, desired_key_bytes);
 	free(key);
 	return o;
