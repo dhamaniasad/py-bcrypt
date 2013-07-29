@@ -41,39 +41,6 @@
 #include "pybc_blf.h"
 #include "pybc_sha2.h"
 
-/*** SHA-224/256/384/512 Machine Architecture Definitions *****************/
-/*
- * BYTE_ORDER NOTE:
- *
- * Please make sure that your system defines BYTE_ORDER.  If your
- * architecture is little-endian, make sure it also defines
- * LITTLE_ENDIAN and that the two (BYTE_ORDER and LITTLE_ENDIAN) are
- * equivilent.
- *
- * If your system does not define the above, then you can do so by
- * hand like this:
- *
- *   #define LITTLE_ENDIAN 1234
- *   #define BIG_ENDIAN    4321
- *
- * And for little-endian machines, add:
- *
- *   #define BYTE_ORDER LITTLE_ENDIAN 
- *
- * Or for big-endian machines:
- *
- *   #define BYTE_ORDER BIG_ENDIAN
- *
- * The FreeBSD machine this was written on defines BYTE_ORDER
- * appropriately by including <sys/types.h> (which in turn includes
- * <machine/endian.h> where the appropriate definitions are actually
- * made).
- */
-#if !defined(BYTE_ORDER) || (BYTE_ORDER != LITTLE_ENDIAN && BYTE_ORDER != BIG_ENDIAN)
-#error Define BYTE_ORDER to be equal to either LITTLE_ENDIAN or BIG_ENDIAN
-#endif
-
-
 /*** SHA-224/256/384/512 Various Length Definitions ***********************/
 /* NOTE: Most of these are in sha2.h */
 #define PYBC_SHA512_SHORT_BLOCK_LENGTH	(PYBC_SHA512_BLOCK_LENGTH - 16)
@@ -384,18 +351,20 @@ void
 PYBC_SHA512Final(u_int8_t digest[PYBC_SHA512_DIGEST_LENGTH], PYBC_SHA2_CTX *context)
 {
 	PYBC_SHA512Pad(context);
+	int i;
+	const u_int32_t endian_test = 0x12345678;
 
 	/* If no digest buffer is passed, we don't bother doing this: */
 	if (digest != NULL) {
-#if BYTE_ORDER == LITTLE_ENDIAN
-		int	i;
-
-		/* Convert TO host byte order */
-		for (i = 0; i < 8; i++)
-			BE_64_TO_8(digest + i * 8, context->state.st64[i]);
-#else
-		memcpy(digest, context->state.st64, PYBC_SHA512_DIGEST_LENGTH);
-#endif
+		if (*(u_int8_t *)&endian_test == 0x78) {
+			/* Convert to LE host byte order */
+			for (i = 0; i < 8; i++)
+				BE_64_TO_8(digest + i * 8,
+				    context->state.st64[i]);
+		} else {
+			memcpy(digest, context->state.st64,
+				PYBC_SHA512_DIGEST_LENGTH);
+		}
 		memset(context, 0, sizeof(*context));
 	}
 }
