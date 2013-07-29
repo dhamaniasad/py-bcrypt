@@ -18,7 +18,8 @@ To install, use the standard Python distutils incantation:
 
 Regression tests are in the test/test.py file. This is deliberately in
 a subdirectory so it does not mistakenly pick up the top-level bcrypt/
-directory.
+directory. ***PLEASE*** run the regress tests and ensure they pass before
+installing this module.
 
 py-bcrypt is licensed under a ISC/BSD licence. The underlying Blowfish
 and password hashing code is taken from OpenBSD's libc. See the LICENSE
