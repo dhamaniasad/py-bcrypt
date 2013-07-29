@@ -100,6 +100,15 @@ class TestBcrypt(unittest.TestCase):
 				crypted2 = bcrypt.hashpw(plain, crypted)
 				self.assertEqual(crypted, crypted2)
 
+	def test_02__checkpw_success(self):
+		for plain, salt, expected in test_vectors:
+			self.assertTrue(bcrypt.checkpw(plain, expected))
+
+	def test_03__checkpw_fail(self):
+		for plain, salt, expected in test_vectors:
+			self.assertFalse(bcrypt.checkpw("foo", expected))
+
+
 # rounds, password, salt, expected_key
 kdf_test_vectors = [
 	[ 4, "password", "salt",

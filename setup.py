@@ -27,11 +27,12 @@ VERSION = "0.3"
 if __name__ == '__main__':
 	bcrypt = Extension('bcrypt._bcrypt',
 		sources = [
+			'bcrypt/bcrypt.c',
+			'bcrypt/bcrypt_pbkdf.c',
 			'bcrypt/bcrypt_python.c',
 			'bcrypt/blowfish.c',
-			'bcrypt/bcrypt.c',
 			'bcrypt/sha2.c',
-			'bcrypt/bcrypt_pbkdf.c',
+			'bcrypt/timingsafe_bcmp.c',
 		],
 	)
 	setup(	name = "py-bcrypt",

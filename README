@@ -40,8 +40,8 @@ A simple example that demonstrates most of the features:
 	hashed = bcrypt.hashpw(password, bcrypt.gensalt(10))
 
 	# Check that an unencrypted password matches one that has
-	# previously been hashed
-	if bcrypt.hashpw(plaintext, hashed) == hashed:
+	# previously been hashed.
+	if bcrypt.checkpw(plaintext, hashed):
 		print "It matches"
 	else:
 		print "It does not match"

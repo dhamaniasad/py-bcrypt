@@ -34,13 +34,14 @@
 #ifndef _PYBC_BLF_H_
 #define _PYBC_BLF_H_
 
+#include <sys/types.h>
 #if defined(_WIN32)
 typedef unsigned __int8		u_int8_t;
 typedef unsigned __int16	u_int16_t;
 typedef unsigned __int32	u_int32_t;
 typedef unsigned __int64	u_int64_t;
 #elif __STDC_VERSION__ >= 199901L /* C99 or later */
-include <stdint.h>
+#include <stdint.h>
 typedef uint8_t u_int8_t;
 typedef uint16_t u_int16_t;
 typedef uint32_t u_int32_t;
@@ -85,5 +86,8 @@ u_int32_t pybc_Blowfish_stream2word(const u_int8_t *, u_int16_t, u_int16_t *);
 int bcrypt_pbkdf(const char *pass, size_t passlen,
     const u_int8_t *salt, size_t saltlen,
     u_int8_t *key, size_t keylen, unsigned int rounds);
+
+/* timingsafe_bcmp */
+int pybc_timingsafe_bcmp(const void *b1, const void *b2, size_t n);
 
 #endif

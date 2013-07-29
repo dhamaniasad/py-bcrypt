@@ -61,20 +61,20 @@ bcrypt_hash(u_int8_t *sha2pass, u_int8_t *sha2salt, u_int8_t *out)
 	size_t shalen = PYBC_SHA512_DIGEST_LENGTH;
 
 	/* key expansion */
-	Blowfish_initstate(&state);
-	Blowfish_expandstate(&state, sha2salt, shalen, sha2pass, shalen);
+	pybc_Blowfish_initstate(&state);
+	pybc_Blowfish_expandstate(&state, sha2salt, shalen, sha2pass, shalen);
 	for (i = 0; i < 64; i++) {
-		Blowfish_expand0state(&state, sha2salt, shalen);
-		Blowfish_expand0state(&state, sha2pass, shalen);
+		pybc_Blowfish_expand0state(&state, sha2salt, shalen);
+		pybc_Blowfish_expand0state(&state, sha2pass, shalen);
 	}
 
 	/* encryption */
 	j = 0;
 	for (i = 0; i < BCRYPT_BLOCKS; i++)
-		cdata[i] = Blowfish_stream2word(ciphertext, sizeof(ciphertext),
+		cdata[i] = pybc_Blowfish_stream2word(ciphertext, sizeof(ciphertext),
 		    &j);
 	for (i = 0; i < 64; i++)
-		blf_enc(&state, cdata, sizeof(cdata) / sizeof(u_int64_t));
+		pybc_blf_enc(&state, cdata, sizeof(cdata) / sizeof(u_int64_t));
 
 	/* copy out */
 	for (i = 0; i < BCRYPT_BLOCKS; i++) {

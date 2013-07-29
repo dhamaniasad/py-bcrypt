@@ -17,6 +17,8 @@
 #define PY_SSIZE_T_CLEAN
 #include "Python.h"
 
+#include "pybc_blf.h"
+
 #if PY_VERSION_HEX < 0x02050000
 typedef int Py_ssize_t;
 #define bzero(s,l) memset(s, '\0', l)
@@ -115,9 +117,11 @@ bcrypt_hashpw(PyObject *self, PyObject *args, PyObject *kw_args)
 		    "password must not contain nul characters");
 		return NULL;
 	}
+	password_len = 0;
 	if ((salt_copy = checkdup(salt, salt_len)) == NULL) {
 		PyErr_SetString(PyExc_ValueError,
 		    "salt must not contain nul characters");
+		bzero(password_copy, strlen(password_copy));
 		free(password_copy);
 		return NULL;
 	}
@@ -129,7 +133,7 @@ bcrypt_hashpw(PyObject *self, PyObject *args, PyObject *kw_args)
 	free(password_copy);
 	bzero(salt_copy, strlen(salt_copy));
 	free(salt_copy);
-	if (ret != 0 || strcmp(hashed, ":") == 0) {
+	if (ret != 0 || strlen(hashed) < 32) {
 		PyErr_SetString(PyExc_ValueError, "Invalid salt");
 		return NULL;
 	}
@@ -138,6 +142,75 @@ bcrypt_hashpw(PyObject *self, PyObject *args, PyObject *kw_args)
 #else
 	return PyString_FromString(hashed);
 #endif
+}
+
+PyDoc_STRVAR(bcrypt_checkpw_doc,
+"checkpw(password, hashed_password) -> boolean\n\
+    Verify that the plaintext password matches hashed_password. Returns true\n\
+    if it matches or false otherwise.\n");
+
+static PyObject *
+bcrypt_checkpw(PyObject *self, PyObject *args, PyObject *kw_args)
+{
+	static char *keywords[] = { "password", "hashed_password", NULL };
+	char *password = NULL, *expected = NULL;
+	char hashed[128], *password_copy, *expected_copy;
+	Py_ssize_t password_len = -1, expected_len = -1, hashed_len;
+	int ret;
+
+	if (!PyArg_ParseTupleAndKeywords(args, kw_args, "s#s#:checkpw",
+	    keywords,
+	    &password, &password_len, &expected, &expected_len))
+                return NULL;
+
+	if (password_len < 0 || password_len > 65535) {
+		PyErr_SetString(PyExc_ValueError,
+		    "unsupported password length");
+		return NULL;
+	}
+	if (expected_len < 0 || expected_len > 65535) {
+		PyErr_SetString(PyExc_ValueError,
+		    "unsupported hashed_password length");
+		return NULL;
+	}
+	if ((password_copy = checkdup(password, password_len)) == NULL) {
+		PyErr_SetString(PyExc_ValueError,
+		    "password must not contain nul characters");
+		return NULL;
+	}
+	password_len = 0;
+	if ((expected_copy = checkdup(expected, expected_len)) == NULL) {
+		PyErr_SetString(PyExc_ValueError,
+		    "hashed_password must not contain nul characters");
+		bzero(password_copy, strlen(password_copy));
+		free(password_copy);
+		return NULL;
+	}
+
+	Py_BEGIN_ALLOW_THREADS;
+	ret = pybc_bcrypt(password_copy, expected_copy, hashed, sizeof(hashed));
+	Py_END_ALLOW_THREADS;
+
+	bzero(password_copy, strlen(password_copy));
+	free(password_copy);
+	hashed_len = strlen(hashed);
+	if (ret != 0 || hashed_len < 32) {
+		PyErr_SetString(PyExc_ValueError,
+		    "Invalid hashed_password salt");
+		bzero(expected_copy, strlen(expected_copy));
+		free(expected_copy);
+		return NULL;
+	}
+	ret = 1; /* fail unless timingsafe_bcmp runs and succeeds */
+	if (hashed_len == strlen(expected_copy))
+		ret = pybc_timingsafe_bcmp(expected_copy, hashed, hashed_len);
+	bzero(hashed, sizeof(hashed));
+	bzero(expected_copy, strlen(expected_copy));
+	free(expected_copy);
+	if (ret == 0)
+		Py_RETURN_TRUE;
+	else
+		Py_RETURN_FALSE;
 }
 
 PyDoc_STRVAR(bcrypt_kdf_doc,
@@ -210,6 +283,8 @@ bcrypt_kdf(PyObject *self, PyObject *args, PyObject *kw_args)
 }
 
 static PyMethodDef bcrypt_methods[] = {
+	{	"checkpw",	(PyCFunction)bcrypt_checkpw,
+		METH_VARARGS|METH_KEYWORDS,	bcrypt_checkpw_doc	},
 	{	"hashpw",	(PyCFunction)bcrypt_hashpw,
 		METH_VARARGS|METH_KEYWORDS,	bcrypt_hashpw_doc	},
 	{	"encode_salt",	(PyCFunction)bcrypt_encode_salt,
