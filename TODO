@@ -1,5 +1,3 @@
-Python 3 support
-
-Regress tests (pull from jBCrypt)
+Improve regress tests: tests for bad parameters
 
 $Id$
