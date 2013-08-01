@@ -21,7 +21,6 @@
 
 #if PY_VERSION_HEX < 0x02050000
 typedef int Py_ssize_t;
-#define bzero(s,l) memset(s, '\0', l)
 #endif
 
 #define PYBCRYPT_VERSION "0.4"
