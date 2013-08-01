@@ -34,7 +34,31 @@
  * $From: sha2.c,v 1.1 2001/11/08 00:01:51 adg Exp adg $
  */
 
+#define _BSD_SOURCE
 #include <sys/types.h>
+
+/* PYBC_SHA512Final needs to know the host endian, so try to figure it out */
+#ifdef __linux__
+#include <endian.h>
+#elif __OpenBSD__
+#include <sys/endian.h>
+#endif
+#if defined(BYTE_ORDER)
+# if BYTE_ORDER == LITTLE_ENDIAN
+#  define PYBC_IS_LITTLE_ENDIAN() 1
+# elif BYTE_ORDER == BIG_ENDIAN
+#  define PYBC_IS_LITTLE_ENDIAN() 0
+# endif
+#elif defined(_M_IX86) || defined(_M_X64) || \
+      defined(__x86_64__) || defined(__i386__)
+# define PYBC_IS_LITTLE_ENDIAN() 1 /* little endian */
+#endif
+
+/* If endianness is indiscernable at preprocess time, then detect at runtime */
+#ifndef PYBC_IS_LITTLE_ENDIAN
+static const u_int32_t endian_test = 0x12345678;
+# define PYBC_IS_LITTLE_ENDIAN() (*(u_int8_t *)&endian_test == 0x78)
+#endif
 
 #include <string.h>
 
@@ -352,11 +376,10 @@ PYBC_SHA512Final(u_int8_t digest[PYBC_SHA512_DIGEST_LENGTH], PYBC_SHA2_CTX *cont
 {
 	PYBC_SHA512Pad(context);
 	int i;
-	const u_int32_t endian_test = 0x12345678;
 
 	/* If no digest buffer is passed, we don't bother doing this: */
 	if (digest != NULL) {
-		if (*(u_int8_t *)&endian_test == 0x78) {
+		if (PYBC_IS_LITTLE_ENDIAN()) {
 			/* Convert to LE host byte order */
 			for (i = 0; i < 8; i++)
 				BE_64_TO_8(digest + i * 8,
