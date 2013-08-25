@@ -374,8 +374,9 @@ PYBC_SHA512Pad(PYBC_SHA2_CTX *context)
 void
 PYBC_SHA512Final(u_int8_t digest[PYBC_SHA512_DIGEST_LENGTH], PYBC_SHA2_CTX *context)
 {
-	PYBC_SHA512Pad(context);
 	int i;
+
+	PYBC_SHA512Pad(context);
 
 	/* If no digest buffer is passed, we don't bother doing this: */
 	if (digest != NULL) {
