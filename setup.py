@@ -22,7 +22,7 @@ try:
 except ImportError:
 	from distutils.core import setup, Extension
  
-VERSION = "0.3"
+VERSION = "0.4"
  
 if __name__ == '__main__':
 	bcrypt = Extension('bcrypt._bcrypt',
